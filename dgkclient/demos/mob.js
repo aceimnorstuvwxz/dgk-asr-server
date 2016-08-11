@@ -131,6 +131,12 @@ var dictate = new Dictate({
 // Private methods (called from the callbacks)
 function __message(code, data) {
 	log.innerHTML = "msg: " + code + ": " + (data || '') + "\n" + log.innerHTML;
+	
+	if (code == 8 ) {
+		var jdata = JSON.parse(data);
+		log.innerHTML = "AAAAA " + jdata["result"] + "\n" + log.innerHTML;
+		$("#trans").val($("#trans").val() + " " + jdata["result"]);
+	}
 }
 
 function __error(code, data) {
