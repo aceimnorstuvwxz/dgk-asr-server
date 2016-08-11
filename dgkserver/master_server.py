@@ -28,6 +28,10 @@ import settings
 import common
 import wave
 import audioop
+import subprocess
+
+
+
 
 
 class Application(tornado.web.Application):
@@ -290,6 +294,15 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
         self.write_message(json.dumps(event))
     '''
 
+
+    def asr(oldfn):
+
+        ret = subprocess.Popen("cd /home/dgk/kaldi/egs/thchs30/s5/ && ./sod-api.sh /home/dgk/sodwp/T0_1.wav fff", stdout=subprocess.PIPE, shell=True).stdout.read()
+        print '\n'
+        print ret 
+
+
+
     def nextWav(self):
         self.segid = self.segid + 1
         self.silence_unit_cnt = 0
@@ -332,6 +345,7 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
                         #make a new segment
                         self.segout = True
                         oldfn = self.wavfn; # recognize with it
+                        asr(oldfn)
                         self.nextWav()
 
         else:
