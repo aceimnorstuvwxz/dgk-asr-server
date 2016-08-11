@@ -29,6 +29,7 @@ import common
 import wave
 import audioop
 import subprocess
+import json
 
 
 
@@ -284,7 +285,7 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    '''
+    
     def send_event(self, event):
         event["id"] = self.id
         event_str = str(event)
@@ -292,14 +293,23 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
             event_str = event_str[:97] + "..."
         logging.info("%s: Sending event %s to client" % (self.id, event_str))
         self.write_message(json.dumps(event))
-    '''
+    
 
 
-    def asr(oldfn):
+    def asr(self, oldfn):
+        cmdd = "cd /home/dgk/kaldi/egs/thchs30/s5/ && ./sod-api.sh /home/dgk/dgk-asr-server/dgkserver/%s %s"  % (oldfn, oldfn[:-4])
 
-        ret = subprocess.Popen("cd /home/dgk/kaldi/egs/thchs30/s5/ && ./sod-api.sh /home/dgk/sodwp/T0_1.wav fff", stdout=subprocess.PIPE, shell=True).stdout.read()
-        print '\n'
-        print ret 
+        ret = subprocess.Popen(cmdd, stdout=subprocess.PIPE, shell=True).stdout.read()
+
+        logging.info( "ASR=%s", ret)
+
+        event = {}
+        event['status'] = 0
+        event['type'] = 0
+        event['result'] = ret[:-1] #remove \n
+
+        self.write_message(json.dumps(event))
+        return ret 
 
 
 
@@ -345,7 +355,7 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
                         #make a new segment
                         self.segout = True
                         oldfn = self.wavfn; # recognize with it
-                        asr(oldfn)
+                        res = self.asr(oldfn)
                         self.nextWav()
 
         else:
