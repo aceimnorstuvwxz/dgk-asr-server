@@ -300,15 +300,23 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
         cmdd = "cd /home/dgk/kaldi/egs/thchs30/s5/ && ./sod-api.sh /home/dgk/dgk-asr-server/dgkserver/%s %s"  % (oldfn, oldfn[:-4])
 
         ret = subprocess.Popen(cmdd, stdout=subprocess.PIPE, shell=True).stdout.read()
+        xunfei = False #if compare with xunfei
+        if xunfei == True:
+            cmdd = "cd /home/dgk/tts_corpus_gen/Linux_voice_1.109/bin/ && ./iat_api.sh /home/dgk/dgk-asr-server/dgkserver/%s /home/dgk/dgk-asr-server/dgkserver/%s.trn" % (oldfn, oldfn)
+            ret2 = subprocess.Popen(cmdd, stdout=subprocess.PIPE, shell=True).stdout.read()
 
         logging.info( "ASR=%s", ret)
 
-        event = {}
-        event['status'] = 0
-        event['type'] = 0
-        event['result'] = ret[:-1] #remove \n
+        if len(ret) > 1:
+            event = {}
+            event['status'] = 0
+            event['type'] = 0
+            event['result'] = ret[:-1]  #remove \n
+            if xunfei == True:
+                event['result'] = ret[:-1] + '['+ ret2 + ']'
+                
+            self.write_message(json.dumps(event))
 
-        self.write_message(json.dumps(event))
         return ret 
 
 
