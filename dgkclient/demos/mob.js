@@ -75,7 +75,7 @@ var dictate = new Dictate({
 		},
 		onEndOfSpeech : function() {
 			__message("END OF SPEECH");
-			$("#buttonToggleListening").html('Stopping...');
+			$("#buttonToggleListening").html('>>cancel>>');
 			$("#buttonToggleListening").prop("disabled", true);
 		},
 		onEndOfSession : function() {
