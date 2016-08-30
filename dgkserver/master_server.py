@@ -30,6 +30,7 @@ import wave
 import audioop
 import subprocess
 import json
+import threading
 
 
 
@@ -350,6 +351,8 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
         self.pre_silences = []
         self.remain_message = ''
 
+        self.mutex = threading.Lock()
+
     def pushData(self, unit_data):
         rms = audioop.rms(unit_data, 2)
         logging.info("rms=%f" % rms)
@@ -395,8 +398,9 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
             self.wav.close()
 
     def on_message(self, message):
-
         logging.info("%s: Forwarding client message (%s) of length %d to worker" % (self.id, type(message), len(message)))
+
+        self.mutex.acquire() #protect the streaming
         if isinstance(message, unicode):
             # self.worker.write_message(message, binary=False)
             pass
@@ -409,6 +413,7 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
                 unit_data = self.remain_message[:self.SILENCE_UNIT_LEN]
                 self.remain_message = self.remain_message[self.SILENCE_UNIT_LEN:]
                 self.pushData(unit_data)
+        self.mutex.release() #protect release
 
 
 
