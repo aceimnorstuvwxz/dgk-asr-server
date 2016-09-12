@@ -343,15 +343,16 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
         self.segid = 0 #segment id
         self.nextWav()
         self.segout = True # flag out of a segment
-        self.silencet= 0.0
+
         self.SILENCE_UNIT_LEN = 1600 #int(16000*0.1)
         self.silence_unit_cnt = 0
         self.SICLENCE_THRESH = 300.0
         self.SILENCE_UNIT_MAX = 5
         self.pre_silences = []
         self.remain_message = ''
+        self.total_wav = wave.open(self.id + "total.wav", 'wb')
+        self.total_wav.setparams((1,2,16000,0,'NONE','not compressed'))
 
-        self.mutex = threading.Lock()
 
     def pushData(self, unit_data):
         rms = audioop.rms(unit_data, 2)
@@ -396,11 +397,12 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
         logging.info("%s: Handling on_connection_close()" % self.id)
         if self.wav != None:
             self.wav.close()
+        self.total_wav.close()
 
     def on_message(self, message):
         logging.info("%s: Forwarding client message (%s) of length %d to worker" % (self.id, type(message), len(message)))
 
-        self.mutex.acquire() #protect the streaming
+        # self.mutex.acquire() #protect the streaming
         if isinstance(message, unicode):
             # self.worker.write_message(message, binary=False)
             pass
@@ -413,7 +415,10 @@ class DecoderSocketHandler(tornado.websocket.WebSocketHandler):
                 unit_data = self.remain_message[:self.SILENCE_UNIT_LEN]
                 self.remain_message = self.remain_message[self.SILENCE_UNIT_LEN:]
                 self.pushData(unit_data)
-        self.mutex.release() #protect release
+            self.total_wav.writeframes(message)
+
+
+        # self.mutex.release() #protect release
 
 
 
