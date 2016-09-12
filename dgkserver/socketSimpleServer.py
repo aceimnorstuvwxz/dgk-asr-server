@@ -40,6 +40,10 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     client.
     """
 
+    def setup(self):
+        print "called setup"
+        self.data = ''
+
     def asr(self, oldfn):
         cmdd = "cd /home/dgk/kaldi/egs/thchs30/s5/ && ./sod-api.sh /home/dgk/dgk-asr-server/dgkserver/%s %s"  % (oldfn, oldfn[:-4])
 
@@ -48,15 +52,15 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
         return ret 
 
     def handle(self):
-        # self.request is the TCP socket connected to the client
-
-
+            # self.request is the TCP socket connected to the client
         while True:
-            newdata = self.request.recv(1024)  # is blocking ????
+            newdata = self.request.recv(4096)  # is blocking ????
+            print 'handle recv=', len(newdata)
             if len(newdata) <= 0:
                 print "newdata null == 0"
+                break
             
-            if 'EOF' in newdata:
+            if 'DGKASE' in newdata:
                 pos = newdata.find('EOF')
                 self.data = self.data + newdata[:pos]
 
@@ -68,11 +72,13 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                 self.wav.writeframes(self.data)
                 self.wav.close()
                 ret = self.asr(self.fnstr + '.wav')
+                # ret = 'asdfds'
                 self.request.send(ret+'EOF')
 
                 #ASR end
 
                 self.data = newdata[pos:]
+                break
             else:
                 self.data = self.data + newdata
         
