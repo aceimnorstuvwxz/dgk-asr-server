@@ -200,6 +200,9 @@
 
 		// Private methods
 		function startUserMedia(stream) {
+
+   			var audio = document.querySelector('audio');
+   			audio.src = window.URL.createObjectURL(stream);
 			var input = audioContext.createMediaStreamSource(stream);
 			config.onEvent(MSG_MEDIA_STREAM_CREATED, 'Media stream created');
 
